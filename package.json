@@ -1,0 +1,34 @@
+{
+  "name": "jackin-www",
+  "version": "0.1.0",
+  "description": "Jackin web API",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tap --ts test/**/*.ts",
+    "prepack": "rm -rf dist && tsc && npx typedoc --out dist/doc src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frezik/jackin-www.git"
+  },
+  "keywords": [
+    "hardware",
+    "raspberry",
+    "web",
+    "jackin"
+  ],
+  "author": "Timm Murray <tmurray@wumpus-cave.net>",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/frezik/jackin-www/issues"
+  },
+  "homepage": "https://github.com/frezik/jackin-www#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "jackin": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.5.0",
+    "tap": "^14.10.6"
+  }
+}
