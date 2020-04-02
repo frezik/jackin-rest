@@ -8,6 +8,7 @@ export function startServer(): Promise<string>
     return new Promise( (resolve, reject) => {
         JackinREST.start({
             port: PORT
+            ,log_file: "test.log"
         }).then( () => {
             resolve( `http://localhost:${PORT}` );
         });
