@@ -35,7 +35,7 @@ function default_conf()
     return conf;
 }
 
-function couchdb( conf: {
+function default_couchdb( conf: {
     username: string
     ,password: string
     ,base_url: string
@@ -57,9 +57,18 @@ let httpServer;
 let logger;
 export function start(
     conf?: Object
+    ,couchdb_callback?: () => any
 ): Promise<void>
 {
     if(! conf) conf = default_conf();
+    if(! couchdb_callback ) couchdb_callback = () => {
+        default_couchdb({
+            username: conf["couchdb"]["username"]
+            ,password: conf["couchdb"]["password"]
+            ,base_url: conf["couchdb"]["base_url"]
+            ,database: conf["couchdb"]["database"]
+        });
+    };
 
     logger = Logger.createLogger( conf["log_file"] );
 
@@ -68,12 +77,7 @@ export function start(
     Http.globalAgent.maxSockets = 1000;
     let port = conf["port"];
 
-    const db = couchdb({
-        username: conf["couchdb"]["username"]
-        ,password: conf["couchdb"]["password"]
-        ,base_url: conf["couchdb"]["base_url"]
-        ,database: conf["couchdb"]["database"]
-    });
+    const db = couchdb_callback();
 
     return new Promise( (resolve, reject) => {
         let express = Express();
