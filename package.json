@@ -1,5 +1,5 @@
 {
-  "name": "jackin-www",
+  "name": "jackin-rest",
   "version": "0.1.0",
   "description": "Jackin web API",
   "main": "index.ts",
@@ -15,7 +15,8 @@
     "hardware",
     "raspberry",
     "web",
-    "jackin"
+    "jackin",
+    "rest"
   ],
   "author": "Timm Murray <tmurray@wumpus-cave.net>",
   "license": "BSD-2-Clause",
@@ -25,10 +26,14 @@
   "homepage": "https://github.com/frezik/jackin-www#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "jackin": "^0.2.0"
+    "jackin": "^0.2.0",
+    "js-yaml": "^3.13.1",
+    "nano": "^8.2.0",
+    "yargs": "^15.3.1"
   },
   "devDependencies": {
     "@types/node": "^13.5.0",
-    "tap": "^14.10.6"
+    "tap": "^14.10.6",
+    "superagent": "^5.2.2"
   }
 }
