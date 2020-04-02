@@ -1,3 +1,8 @@
 ---
 port: 3000
 log_file: dev.log
+couchdb:
+    username: username
+    password: password
+    base_url: http://localhost:5984
+    database: jackin

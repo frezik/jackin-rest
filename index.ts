@@ -2,6 +2,7 @@ import * as Express from "express";
 import * as Fs from "fs";
 import * as Http from "http";
 import * as Logger from "logger";
+import * as Nano from "nano";
 import * as Server from "./src/server";
 import * as Yaml from "js-yaml";
 import * as Yargs from "yargs";
@@ -34,6 +35,23 @@ function default_conf()
     return conf;
 }
 
+function couchdb( conf: {
+    username: string
+    ,password: string
+    ,base_url: string
+    ,database: string
+})
+{
+    const url = new URL( conf.base_url );
+    url.username = conf.username;
+    url.password = conf.password;
+
+    const nano = Nano( url.toString() );
+    const jackin = nano.db.use( conf.database );
+
+    return jackin;
+}
+
 
 let httpServer;
 let logger;
@@ -50,9 +68,20 @@ export function start(
     Http.globalAgent.maxSockets = 1000;
     let port = conf["port"];
 
+    const db = couchdb({
+        username: conf["couchdb"]["username"]
+        ,password: conf["couchdb"]["password"]
+        ,base_url: conf["couchdb"]["base_url"]
+        ,database: conf["couchdb"]["database"]
+    });
+
     return new Promise( (resolve, reject) => {
         let express = Express();
-        Server.init( express, logger );
+        Server.init({
+            server: express
+            ,db: db
+            ,logger: logger
+        });
 
         httpServer = Http.createServer( express );
         logger.info( `Starting server on port ${port}` );

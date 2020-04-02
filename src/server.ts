@@ -1,10 +1,18 @@
 import * as Shortid from 'shortid';
 
 
-export function init( server, logger ): void
+let DB;
+
+
+export function init( args: {
+    server: any
+    ,logger: any
+    ,db: any
+}): void
 {
-    server.use( makeLogger( logger ) );
-    makeRoutes( server );
+    args.server.use( makeLogger( args.logger ) );
+    makeRoutes( args.server );
+    DB = args.db;
 }
 
 function makeLogger( logger )
