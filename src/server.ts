@@ -1,18 +1,16 @@
+import * as BasicAuth from 'basic-auth';
+import * as JackinDB from './db';
 import * as Shortid from 'shortid';
 
-
-let DB;
 
 
 export function init( args: {
     server: any
     ,logger: any
-    ,db: any
 }): void
 {
     args.server.use( makeLogger( args.logger ) );
     makeRoutes( args.server );
-    DB = args.db;
 }
 
 function makeLogger( logger )
@@ -44,6 +42,7 @@ function makeLogger( logger )
 function makeRoutes( server ): void
 {
     server.get( '/', homeRoute );
+    server.post( '/auth', authRoute );
 }
 
 
@@ -57,3 +56,34 @@ function homeRoute( req, res )
     res.sendStatus( 200 );
 }
 
+function authRoute( req, res )
+{
+    req.logger.info( "Called auth route" );
+    const auth = BasicAuth( req );
+    const unauthorized_callback = () => {
+        req.sendStatus( 401 );
+    };
+
+    if( auth ) {
+        const user = auth['name'];
+        const pass = auth['pass'];
+
+        JackinDB
+            .fetchDB( JackinDB.AUTH_DB_NAME )
+            .then( (db) => {
+                return db.find({
+                    limit: 1
+                    ,selector: {
+                        email: [ user ]
+                    }
+                    ,fields: [ "email", "password" ]
+                });
+            })
+            .then( (auth) => {
+                // TODO check with castellated
+            });
+    }
+    else {
+        unauthorized_callback();
+    }
+}

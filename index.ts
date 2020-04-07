@@ -83,7 +83,6 @@ export function start(
         let express = Express();
         Server.init({
             server: express
-            ,db: db
             ,logger: logger
         });
 

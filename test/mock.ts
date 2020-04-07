@@ -1,4 +1,5 @@
 import * as JackinREST from '../index';
+import * as JackinDB from '../src/db';
 import * as Fs from 'fs';
 import * as Nano from "nano";
 import * as Shortid from 'shortid';
@@ -9,27 +10,57 @@ import * as Yaml from 'js-yaml';
 
 let PORT = 3000;
 const CONFIG_FILE = "config.yaml";
-let DB;
+let DB: Nano.DatabaseScope;
+let db_uuid: string;
 
 function setup_couchdb( couchdb_conf: {
     username: string
     ,password: string
     ,base_url: string
-}): Promise<any>
+}): Promise<void>
 {
     const url = new URL( couchdb_conf.base_url );
     url.username = couchdb_conf.username;
     url.password = couchdb_conf.password;
 
-    let id = Uuid();
-    const db_name = "jackin-test-" + id;
-    Tap.comment( `Using Jackin database <${db_name}>` );
+    db_uuid = Uuid();
+    Tap.comment( `Using UUID for Jackin databases <${db_uuid}>` );
 
     const nano = Nano( url.toString() );
 
     return new Promise( (resolve, reject) => {
-        DB = nano.db.create( db_name );
-        resolve( DB );
+        DB = nano.db;
+
+        JackinDB.init( DB
+            ,( name: string ): Nano.DocumentScope<any> => {
+                const full_name = name + "-" + db_uuid;
+                return DB.use( full_name );
+            }
+        );
+        resolve();
+    });
+}
+
+export function create_db(
+    name: string
+): Promise<any>
+{
+    const full_name = name + "-" + db_uuid;
+    Tap.comment( `Creating database [${full_name}]` );
+    return new Promise( (resolve, reject) => {
+        DB
+            .create( full_name )
+            .then( (response) => {
+                if( response.ok ) {
+                    Tap.comment(
+                        `Successfully created database [${full_name}]` );
+                    resolve( DB.use( full_name ) );
+                }
+                else {
+                    Tap.comment( `Response failed: ${response}` );
+                    reject( response.reason );
+                }
+            });
     });
 }
 
