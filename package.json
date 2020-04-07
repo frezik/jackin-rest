@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "test": "tap --ts test/**/*.ts",
-    "prepack": "rm -rf dist && tsc && npx typedoc --out dist/doc src"
+    "prepack": "rm -rf dist && tsc --outDir dist/ index.ts && npx typedoc --out dist/doc src"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,8 @@
   },
   "homepage": "https://github.com/frezik/jackin-www#readme",
   "dependencies": {
+    "basic-auth": "^2.0.1",
+    "castellated": "^0.6.0",
     "express": "^4.17.1",
     "jackin": "^0.2.0",
     "js-yaml": "^3.13.1",
