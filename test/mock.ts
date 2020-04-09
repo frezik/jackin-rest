@@ -10,57 +10,54 @@ import * as Yaml from 'js-yaml';
 
 let PORT = 3000;
 const CONFIG_FILE = "config.yaml";
-let DB: Nano.DatabaseScope;
+let DB: Nano.ServerScope;
 let db_uuid: string;
 
-function setup_couchdb( couchdb_conf: {
-    username: string
-    ,password: string
-    ,base_url: string
-}): Promise<void>
+let conf;
+function initConf(): Promise<any>
 {
-    const url = new URL( couchdb_conf.base_url );
-    url.username = couchdb_conf.username;
-    url.password = couchdb_conf.password;
+    if( conf ) {
+        return new Promise( (resolve, reject) => {
+            resolve( conf );
+        });
+    }
+    else {
+        return new Promise( (resolve, reject) => {
+            Fs.readFile( CONFIG_FILE, 'utf8', ( err, data ) => {
+                if( err ) throw err;
 
-    db_uuid = Uuid();
-    Tap.comment( `Using UUID for Jackin databases <${db_uuid}>` );
-
-    const nano = Nano( url.toString() );
-
-    return new Promise( (resolve, reject) => {
-        DB = nano.db;
-
-        JackinDB.init( DB
-            ,( name: string ): Nano.DocumentScope<any> => {
-                const full_name = name + "-" + db_uuid;
-                return DB.use( full_name );
-            }
-        );
-        resolve();
-    });
+                conf = Yaml.safeLoad( data, {
+                    filename: CONFIG_FILE
+                });
+                resolve( conf );
+            })
+        });
+    }
 }
 
-export function create_db(
-    name: string
-): Promise<any>
+export function setupCouchDB(): Promise<void>
 {
-    const full_name = name + "-" + db_uuid;
-    Tap.comment( `Creating database [${full_name}]` );
     return new Promise( (resolve, reject) => {
-        DB
-            .create( full_name )
-            .then( (response) => {
-                if( response.ok ) {
-                    Tap.comment(
-                        `Successfully created database [${full_name}]` );
-                    resolve( DB.use( full_name ) );
+        initConf().then( (conf) => {
+            const url = new URL( conf.couchdb.base_url );
+            url.username = conf.couchdb.username;
+            url.password = conf.couchdb.password;
+
+            db_uuid = Uuid();
+            Tap.comment( `Using UUID for Jackin databases <${db_uuid}>` );
+
+            DB = Nano( url.toString() );
+            JackinDB.init(
+                DB
+                ,url
+                ,( name: string ): string => {
+                    const full_name = name + "-" + db_uuid;
+                    return full_name;
                 }
-                else {
-                    Tap.comment( `Response failed: ${response}` );
-                    reject( response.reason );
-                }
-            });
+            );
+
+            resolve();
+        });
     });
 }
 
@@ -73,25 +70,13 @@ function fetch_couchdb()
 export function startServer(): Promise<string>
 {
     return new Promise( (resolve, reject) => {
-        Fs.readFile( CONFIG_FILE, 'utf8', ( err, data ) => {
-            if( err ) throw err;
-
-            const conf = Yaml.safeLoad( data, {
-                filename: CONFIG_FILE
-            });
-
-            setup_couchdb({
-                username: conf["couchdb"]["username"]
-                ,password: conf["couchdb"]["password"]
-                ,base_url: conf["couchdb"]["base_url"]
-            }).then( () => {
-                return JackinREST.start({
-                    port: PORT
-                    ,log_file: "test.log"
-                }, fetch_couchdb )
-            }).then( () => {
-                resolve( `http://localhost:${PORT}` );
-            });
+        setupCouchDB().then( () => {
+            return JackinREST.start({
+                port: PORT
+                ,log_file: "test.log"
+            }, fetch_couchdb )
+        }).then( () => {
+            resolve( `http://localhost:${PORT}` );
         });
     });
 }

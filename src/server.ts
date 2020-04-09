@@ -68,20 +68,7 @@ function authRoute( req, res )
         const user = auth['name'];
         const pass = auth['pass'];
 
-        JackinDB
-            .fetchDB( JackinDB.AUTH_DB_NAME )
-            .then( (db) => {
-                return db.find({
-                    limit: 1
-                    ,selector: {
-                        email: [ user ]
-                    }
-                    ,fields: [ "email", "password" ]
-                });
-            })
-            .then( (auth) => {
-                // TODO check with castellated
-            });
+        // TODO
     }
     else {
         unauthorized_callback();
