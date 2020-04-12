@@ -2,11 +2,12 @@ import * as JackinDB from '../src/db';
 import * as Nano from 'nano';
 import * as Tap from 'tap';
 import * as Mock from './mock';
+import User from '../src/db/user';
 
 Tap.plan( 6 );
 
 
-let user = new JackinDB.User(
+let user = new User(
     "foo@example.com"
     ,"plainpassword"
 );
@@ -14,7 +15,7 @@ let last_rev_id: string;
 
 
 Mock.setupCouchDB().then( () => {
-    return JackinDB.User.initDB();
+    return User.initDB();
 }).then( () => {
     return user.insert();
 }).then( () => {
@@ -29,7 +30,7 @@ Mock.setupCouchDB().then( () => {
     Tap.ok( "bar@example.com" == user.email, "Updated user" );
     Tap.ok( last_rev_id != user._rev, "New rev set" );
 
-    return JackinDB.User.getByEmail( "bar@example.com" );
+    return User.getByEmail( "bar@example.com" );
 }).then( (fetched_user) => {
     Tap.ok( "bar@example.com" == fetched_user.email, "Fetched user by email" );
     Tap.ok( user._rev == fetched_user._rev, "Fetched same revision" );

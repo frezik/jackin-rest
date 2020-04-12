@@ -4,6 +4,7 @@ import Castle from 'castellated';
 import * as Mock from './mock';
 import * as Superagent from 'superagent';
 import { v1 as Uuid } from 'uuid';
+import User from '../src/db/user';
 
 Tap.plan( 5 );
 
@@ -19,14 +20,14 @@ let base_url: string;
 Mock.startServer().then( ( baseurl ) => {
     Tap.comment( "Started server" );
     base_url = baseurl;
-    return JackinDB.User.initDB();
+    return User.initDB();
 })
 .then( (db) => {
     return plain_encoder
         .encode( GOOD_PASSWORD )
         .then( (encoded_password) => {
             const id = Uuid();
-            const user = new JackinDB.User(
+            const user = new User(
                 GOOD_USERNAME
                 ,encoded_password.toString()
             );
@@ -64,7 +65,7 @@ Mock.startServer().then( ( baseurl ) => {
     Tap.comment( "Stopped server" );
 })
 .then( () => {
-    return JackinDB.User.getByEmail( GOOD_USERNAME );
+    return User.getByEmail( GOOD_USERNAME );
 })
 .then( (user) => {
     Tap.ok(! user.password.match( /plain/ ),

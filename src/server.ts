@@ -3,6 +3,7 @@ import Castle from 'castellated';
 import * as Crypto from 'crypto';
 import * as JackinDB from './db';
 import * as Shortid from 'shortid';
+import User from './db/user';
 
 
 const AUTH_TOKEN_BYTES = 32;
@@ -32,7 +33,7 @@ function castle_fetch_callback(
 ): Promise<string>
 {
     return new Promise( (resolve, reject) => {
-        JackinDB.User.getByEmail( username ).then( (user) => {
+        User.getByEmail( username ).then( (user) => {
             resolve( user.password );
         });
     });
@@ -44,7 +45,7 @@ function castle_update_callback(
 ): Promise<void>
 {
     return new Promise( (resolve, reject) => {
-        JackinDB.User.getByEmail( username ).then( (user) => {
+        User.getByEmail( username ).then( (user) => {
             user.password = password;
             return user.update();
         }).then( () => {
@@ -59,7 +60,7 @@ function castle_add_user_callback(
 ): Promise<void>
 {
     return new Promise( (resolve, reject) => {
-        let user = new JackinDB.User(
+        let user = new User(
             username
             ,password
         );
