@@ -85,6 +85,7 @@ export function start(
         Server.init({
             server: express
             ,logger: logger
+            ,auth_config: conf["auth"]
         });
 
         httpServer = Http.createServer( express );

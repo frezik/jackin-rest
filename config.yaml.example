@@ -1,6 +1,9 @@
 ---
 port: 3000
 log_file: dev.log
+auth:
+    preferred_method: bcrypt
+    method_args: 10
 couchdb:
     username: username
     password: password

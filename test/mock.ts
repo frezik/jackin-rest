@@ -29,6 +29,11 @@ function initConf(): Promise<any>
                 conf = Yaml.safeLoad( data, {
                     filename: CONFIG_FILE
                 });
+
+                // Override parts for tests
+                conf.port = PORT;
+                conf.auth.preferred_method = "bcrypt";
+                conf.auth.method_args = 1;
                 resolve( conf );
             })
         });
@@ -71,10 +76,9 @@ export function startServer(): Promise<string>
 {
     return new Promise( (resolve, reject) => {
         setupCouchDB().then( () => {
-            return JackinREST.start({
-                port: PORT
-                ,log_file: "test.log"
-            }, fetch_couchdb )
+            return initConf()
+        }).then( (conf) => {
+            return JackinREST.start( conf, fetch_couchdb );
         }).then( () => {
             resolve( `http://localhost:${PORT}` );
         });
