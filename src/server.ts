@@ -10,6 +10,12 @@ import User from './db/user';
 
 const AUTH_TOKEN_BYTES = 32;
 
+// Routes that are allowed without a valid auth token
+const AUTH_TOKEN_WHITELIST = {
+    "GET /": true
+    ,"POST /auth": true
+};
+
 
 let castle: Castle;
 
@@ -27,6 +33,7 @@ export function init( args: {
 {
     castle = makeCastle( args.auth_config );
     args.server.use( makeLogger( args.logger ) );
+    args.server.use( authTokenCheck );
     makeRoutes( args.server );
 }
 
@@ -120,6 +127,47 @@ function makeRoutes( server ): void
     server.get( '/auth', authCheckRoute );
 }
 
+function authTokenCheck( req, res, next ): void
+{
+    // First, check whitelist
+    const method = req.method;
+    const path = req.path;
+    const check_string = method + " " + path;
+
+    if( AUTH_TOKEN_WHITELIST[check_string] ) {
+        next();
+    }
+    else {
+        // Not on whitelist, check for token
+        const auth_header = req.get( 'Authorization' );
+        const auth_components = auth_header.split( " " );
+
+        if( (1 < auth_components.length)
+            && ("Bearer" == auth_components[0])
+        ) {
+            const auth_token = auth_components[1];
+            Auth.isTokenOK( auth_token ).then( (is_ok) => {
+                if( is_ok ) {
+                    req.logger.info( "Token is authorized" );
+                    next();
+                }
+                else {
+                    req.logger.info( "Token is not authorized" );
+                    res.sendStatus( 401 );
+                }
+            }).catch( (err) => {
+                req.logger.error( "Error: " + err );
+                res.sendStatus( 500 );
+            });
+        }
+        else {
+            req.logger.error(
+                "Client did not send correct authorization header" );
+            res.sendStatus( 401 );
+        }
+    }
+}
+
 
 //
 // Route functions below
@@ -193,29 +241,5 @@ function authRoute( req, res )
 function authCheckRoute( req, res )
 {
     req.logger.info( "Called auth check route" );
-    const auth_header = req.get( 'Authorization' );
-    const auth_components = auth_header.split( " " );
-
-    if( (1 < auth_components.length)
-        && ("Bearer" == auth_components[0])
-    ) {
-        const auth_token = auth_components[1];
-        Auth.isTokenOK( auth_token ).then( (is_ok) => {
-            if( is_ok ) {
-                req.logger.info( "Token is authorized" );
-                res.sendStatus( 200 );
-            }
-            else {
-                req.logger.info( "Token is not authorized" );
-                res.sendStatus( 401 );
-            }
-        }).catch( (err) => {
-            req.logger.error( "Error: " + err );
-            res.sendStatus( 500 );
-        });
-    }
-    else {
-        req.logger.error( "Client did not send correct authorization header" );
-        res.sendStatus( 401 );
-    }
+    res.sendStatus( 200 );
 }
