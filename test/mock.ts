@@ -8,7 +8,7 @@ import * as Tap from 'tap';
 import * as Yaml from 'js-yaml';
 
 
-let PORT = 3000;
+let PORT;
 const CONFIG_FILE = "config.yaml";
 let DB: Nano.ServerScope;
 let db_uuid: string;
@@ -24,7 +24,6 @@ function initConf(
         });
     }
     else {
-        if(! port ) port = PORT;
         PORT = port;
 
         return new Promise( (resolve, reject) => {
@@ -77,17 +76,16 @@ function fetch_couchdb()
 }
 
 
-export function startServer( args?: {
+export function startServer( args: {
     auth_token_sec_timeout?: number
-    ,port?: number
+    ,port: number
 }): Promise<string>
 {
-    if(! args) args = {};
-    if(! args.port) args.port = PORT;
-
     return new Promise( (resolve, reject) => {
-        setupCouchDB().then( () => {
-            return initConf( args.port );
+        initConf( args.port ).then( (conf) => {
+            setupCouchDB();
+        }).then( () => {
+            return initConf();
         }).then( (conf) => {
             if( args.auth_token_sec_timeout ) {
                 conf.auth_token_sec_timeout = args.auth_token_sec_timeout;
