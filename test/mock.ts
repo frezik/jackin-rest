@@ -14,7 +14,9 @@ let DB: Nano.ServerScope;
 let db_uuid: string;
 
 let conf;
-function initConf(): Promise<any>
+function initConf(
+    port?: number
+): Promise<any>
 {
     if( conf ) {
         return new Promise( (resolve, reject) => {
@@ -22,6 +24,9 @@ function initConf(): Promise<any>
         });
     }
     else {
+        if(! port ) port = PORT;
+        PORT = port;
+
         return new Promise( (resolve, reject) => {
             Fs.readFile( CONFIG_FILE, 'utf8', ( err, data ) => {
                 if( err ) throw err;
@@ -72,12 +77,22 @@ function fetch_couchdb()
 }
 
 
-export function startServer(): Promise<string>
+export function startServer( args?: {
+    auth_token_sec_timeout?: number
+    ,port?: number
+}): Promise<string>
 {
+    if(! args) args = {};
+    if(! args.port) args.port = PORT;
+
     return new Promise( (resolve, reject) => {
         setupCouchDB().then( () => {
-            return initConf()
+            return initConf( args.port );
         }).then( (conf) => {
+            if( args.auth_token_sec_timeout ) {
+                conf.auth_token_sec_timeout = args.auth_token_sec_timeout;
+            }
+
             return JackinREST.start( conf, fetch_couchdb );
         }).then( () => {
             resolve( `http://localhost:${PORT}` );

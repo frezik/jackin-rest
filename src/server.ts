@@ -1,7 +1,9 @@
+import Auth from './db/auth';
 import * as BasicAuth from 'basic-auth';
 import Castle from 'castellated';
 import * as Crypto from 'crypto';
 import * as JackinDB from './db';
+import * as Moment from 'moment';
 import * as Shortid from 'shortid';
 import User from './db/user';
 
@@ -115,6 +117,7 @@ function makeRoutes( server ): void
 {
     server.get( '/', homeRoute );
     server.post( '/auth', authRoute );
+    server.get( '/auth', authCheckRoute );
 }
 
 
@@ -151,12 +154,18 @@ function authRoute( req, res )
                             throw err;
                         }
                         const token = buf.toString( 'hex' );
-                        // TODO save string, with timestamp for expiration
-                        res
-                            .status( 200 )
-                            .json({
-                                token: token
-                            });
+
+                        const auth = new Auth(
+                            token
+                            ,Moment()
+                        );
+                        auth.insert().then( () => {
+                            res
+                                .status( 200 )
+                                .json({
+                                    token: token
+                                });
+                        });
                     });
                 }
                 else {
@@ -178,5 +187,35 @@ function authRoute( req, res )
     }
     else {
         unauthorized_callback();
+    }
+}
+
+function authCheckRoute( req, res )
+{
+    req.logger.info( "Called auth check route" );
+    const auth_header = req.get( 'Authorization' );
+    const auth_components = auth_header.split( " " );
+
+    if( (1 < auth_components.length)
+        && ("Bearer" == auth_components[0])
+    ) {
+        const auth_token = auth_components[1];
+        Auth.isTokenOK( auth_token ).then( (is_ok) => {
+            if( is_ok ) {
+                req.logger.info( "Token is authorized" );
+                res.sendStatus( 200 );
+            }
+            else {
+                req.logger.info( "Token is not authorized" );
+                res.sendStatus( 401 );
+            }
+        }).catch( (err) => {
+            req.logger.error( "Error: " + err );
+            res.sendStatus( 500 );
+        });
+    }
+    else {
+        req.logger.error( "Client did not send correct authorization header" );
+        res.sendStatus( 401 );
     }
 }

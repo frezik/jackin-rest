@@ -9,6 +9,7 @@ import * as Yargs from "yargs";
 
 
 const CONFIG_FILE = 'config.yaml';
+export let CONF;
 
 
 function default_conf()
@@ -71,6 +72,7 @@ export function start(
         });
     };
 
+    CONF = conf;
     logger = Logger.createLogger( conf["log_file"] );
 
     // Fix hanging connections for certain external requests. See:

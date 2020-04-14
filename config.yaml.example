@@ -1,6 +1,7 @@
 ---
 port: 3000
 log_file: dev.log
+auth_token_sec_timeout: 1800
 auth:
     preferred_method: bcrypt
     method_args: 10

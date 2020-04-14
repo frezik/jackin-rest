@@ -4,23 +4,22 @@ import * as Superagent from 'superagent';
 
 Tap.plan( 3 );
 
+const PORT = 3000;
+
 
 Mock
-    .startServer()
-    .then( ( baseurl ) => {
+    .startServer({
+        port: PORT
+    }).then( ( baseurl ) => {
         Tap.pass( `Started server at ${baseurl}` );
         return Superagent
             .get( `${baseurl}/` );
-    })
-    .then( (res) => {
+    }).then( (res) => {
         Tap.ok( 200 == res.statusCode, "Status code is OK" );
-    })
-    .then( () => {
+    }).then( () => {
         return Mock.stopServer();
-    })
-    .then( () => {
+    }).then( () => {
         Tap.pass( "Stopped server" );
-    })
-    .catch( (err) => {
+    }).catch( (err) => {
         Tap.fail( "Error: " + err );
     });

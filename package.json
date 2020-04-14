@@ -31,6 +31,8 @@
     "jackin": "^0.2.0",
     "js-yaml": "^3.13.1",
     "logger": "0.0.1",
+    "manipulate": "0.0.7",
+    "moment": "^2.24.0",
     "nano": "^8.2.2",
     "shortid": "^2.2.15",
     "superagent": "^5.2.2",
