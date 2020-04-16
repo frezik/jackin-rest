@@ -1,7 +1,7 @@
 import * as JackinDB from '../src/db';
 import * as Nano from 'nano';
 import * as Tap from 'tap';
-import * as Mock from './mock';
+import * as Mock from '../test_lib/mock';
 import User from '../src/db/user';
 
 Tap.plan( 6 );

@@ -2,7 +2,7 @@ import * as Tap from 'tap';
 import * as JackinDB from '../src/db';
 import Auth from '../src/db/auth';
 import Castle from 'castellated';
-import * as Mock from './mock';
+import * as Mock from '../test_lib/mock';
 import * as Superagent from 'superagent';
 import { v1 as Uuid } from 'uuid';
 import User from '../src/db/user';

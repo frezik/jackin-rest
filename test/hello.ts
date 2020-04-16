@@ -1,5 +1,5 @@
 import * as Tap from 'tap';
-import * as Mock from './mock';
+import * as Mock from '../test_lib/mock';
 import * as Superagent from 'superagent';
 
 Tap.plan( 3 );
