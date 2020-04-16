@@ -1,5 +1,4 @@
 * Match auth token to a user
-* Refactor out the fetching of an auth token in tests
 * Test database for user gets deleted at end
     * https://stackoverflow.com/questions/14031763/doing-a-cleanup-action-just-before-node-js-exits
 

@@ -1,15 +1,23 @@
+import Auth from '../src/db/auth';
+import Castle from 'castellated';
 import * as JackinREST from '../index';
 import * as JackinDB from '../src/db';
 import * as Fs from 'fs';
 import * as Nano from "nano";
 import * as Shortid from 'shortid';
 import { v1 as Uuid } from 'uuid';
+import * as Superagent from 'superagent';
 import * as Tap from 'tap';
+import User from '../src/db/user';
 import * as Yaml from 'js-yaml';
+
+const plain_encoder = new Castle.Plaintext();
 
 
 let PORT;
 const CONFIG_FILE = "config.yaml";
+const GOOD_USERNAME = "foo";
+const GOOD_PASSWORD = "bar";
 let DB: Nano.ServerScope;
 let db_uuid: string;
 
@@ -94,6 +102,37 @@ export function startServer( args: {
             return JackinREST.start( conf, fetch_couchdb );
         }).then( () => {
             resolve( `http://localhost:${PORT}` );
+        });
+    });
+}
+
+export function setupAuth(
+    baseurl: string
+): Promise<string>
+{
+    return new Promise( (resolve, reject) => {
+        Promise.all([
+            User.initDB()
+            ,Auth.initDB()
+        ]).then( () => {
+            return plain_encoder
+                .encode( GOOD_PASSWORD )
+                .then( (encoded_password) => {
+                    const id = Uuid();
+                    const user = new User(
+                        GOOD_USERNAME
+                        ,encoded_password.toString()
+                    );
+                    return user.insert();
+                });
+        }).then( () => {
+            Tap.comment( "Sending auth request" );
+            return Superagent
+                .post( `${baseurl}/auth` )
+                .auth( GOOD_USERNAME, GOOD_PASSWORD );
+        }).then( (res) => {
+            if( 200 != res.statusCode ) throw "Could not authenticate, bailing";
+            resolve( res.body.token );
         });
     });
 }
