@@ -125,6 +125,7 @@ function makeRoutes( server ): void
     server.get( '/', homeRoute );
     server.post( '/auth', authRoute );
     server.get( '/auth', authCheckRoute );
+    server.get( '/device', fetchDevicesRoute );
 }
 
 function authTokenCheck( req, res, next ): void
@@ -242,4 +243,12 @@ function authCheckRoute( req, res )
 {
     req.logger.info( "Called auth check route" );
     res.sendStatus( 200 );
+}
+
+function fetchDevicesRoute( req, res )
+{
+    req.logger.info( "Called devices route" );
+    res
+        .status( 200 )
+        .send({});
 }
