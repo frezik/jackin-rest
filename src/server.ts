@@ -134,6 +134,7 @@ function makeRoutes( server ): void
     server.get( '/device/:header/:pin/mode', fetchPinModeRoute );
     server.put( '/device/:header/:pin/mode', setPinModeRoute );
     server.get( '/device/:header/:pin/value', fetchPinValueRoute );
+    server.put( '/device/:header/:pin/value', setPinValueRoute );
     server.get( '/device/:header/:pin/pullup', fetchPinPullupRoute );
 }
 
@@ -421,6 +422,43 @@ async function fetchPinValueRoute( req, res )
     }
 
     const value = await pin.gpio.getValue();
+    res.send({
+        value: value
+    });
+}
+
+async function setPinValueRoute( req, res )
+{
+    req.logger.info( "Called set pin mode route" );
+    const device_num = req.params[ 'header' ];
+    const pin_num = req.params[ 'pin' ];
+    const device = JackinREST.DEVICE;
+    const max_pin_num = device.maxPinNum();
+    const wanted_value = req.body[ 'value' ];
+
+    if( pin_num > max_pin_num ) {
+        res.sendStatus( 404 );
+        return;
+    }
+
+    const pin = device.getPin( pin_num );
+    if(! pin.hasOwnProperty( 'gpio' ) ) {
+        res
+            .status( 400 )
+            .send({
+                msg: `Pin ${pin_num} is not a GPIO pin`
+            });
+        return;
+    }
+
+    // This forces the incoming value to be a boolean, no matter what the 
+    // client sent us.
+    const value =
+        wanted_value ? true :
+        wanted_value ? false :
+        false;
+
+    await pin.gpio.setValue( value );
     res.send({
         value: value
     });
