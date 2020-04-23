@@ -6,7 +6,7 @@ import * as MockDevice from '../test_lib/mock_device';
 import * as Superagent from 'superagent';
 import { v1 as Uuid } from 'uuid';
 
-Tap.plan( 37 );
+Tap.plan( 40 );
 
 const PORT = 3002;
 const DEVICE = new MockDevice.Device();
@@ -202,6 +202,23 @@ Mock.startServer({
     Tap.ok( res.body.pullup == "up",
         "Value is up" );
 })
+
+.then( () => {
+    Tap.comment( "Sending /device/1/4/pullup set request" );
+    return Superagent
+        .put( `${base_url}/device/1/4/pullup` )
+        .set( 'Authorization', `Bearer ${auth}` )
+        .send({ pullup: "down" });
+})
+.then( (res) => {
+    Tap.ok( 200 == res.statusCode, "Correct status code sent" );
+    Tap.ok( res.header[ 'content-type' ].match( /^application\/json/ ),
+        "Got JSON in response" );
+
+    Tap.ok( res.body.pullup == "down",
+        "Pullup set to down" );
+})
+
 
 .then( () => {
     return Mock.stopServer();

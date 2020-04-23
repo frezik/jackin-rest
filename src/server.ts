@@ -136,6 +136,7 @@ function makeRoutes( server ): void
     server.get( '/device/:header/:pin/value', fetchPinValueRoute );
     server.put( '/device/:header/:pin/value', setPinValueRoute );
     server.get( '/device/:header/:pin/pullup', fetchPinPullupRoute );
+    server.put( '/device/:header/:pin/pullup', setPinPullupRoute );
 }
 
 function authTokenCheck( req, res, next ): void
@@ -495,5 +496,54 @@ async function fetchPinPullupRoute( req, res )
         null;
     res.send({
         pullup: pullup_str
+    });
+}
+
+async function setPinPullupRoute( req, res )
+{
+    req.logger.info( "Called set pin mode route" );
+    const device_num = req.params[ 'header' ];
+    const pin_num = req.params[ 'pin' ];
+    const device = JackinREST.DEVICE;
+    const max_pin_num = device.maxPinNum();
+    const wanted_pullup = req.body[ 'pullup' ];
+
+    if( pin_num > max_pin_num ) {
+        res.sendStatus( 404 );
+        return;
+    }
+
+    const pin = device.getPin( pin_num );
+    if(! pin.hasOwnProperty( 'gpio' ) ) {
+        res
+            .status( 400 )
+            .send({
+                msg: `Pin ${pin_num} is not a GPIO pin`
+            });
+        return;
+    }
+
+    if(
+        (wanted_pullup != "up")
+        && (wanted_pullup != "down")
+        && (wanted_pullup != "floating")
+    ) {
+        res
+            .status( 400 )
+            .send({
+                msg: `Pullup value should be "up", "down", or "floating"`
+            });
+        return;
+    }
+
+    const pullup =
+        (wanted_pullup == "up") ? Jackin.PullupMode.up :
+        (wanted_pullup == "down") ? Jackin.PullupMode.down :
+        (wanted_pullup == "floating") ? Jackin.PullupMode.floating :
+        Jackin.PullupMode.floating; // How did we get here?
+
+    await pin.gpio.setPullup( pullup );
+    res.send({
+        pullup: wanted_pullup
     });
 }
