@@ -6,7 +6,7 @@ import * as MockDevice from '../test_lib/mock_device';
 import * as Superagent from 'superagent';
 import { v1 as Uuid } from 'uuid';
 
-Tap.plan( 19 );
+Tap.plan( 25 );
 
 const PORT = 3002;
 const DEVICE = new MockDevice.Device();
@@ -101,6 +101,40 @@ Mock.startServer({
     Tap.ok( 200 == res.statusCode, "Correct status code sent" );
     Tap.ok( res.body.mode == "write",
         "Mode is write" );
+})
+
+.then( () => {
+    Tap.comment( "Sending /device/1/4/value request" );
+    return Superagent
+        .get( `${base_url}/device/1/4/value` )
+        .set( 'Authorization', `Bearer ${auth}` );
+})
+.then( (res) => {
+    Tap.ok( 200 == res.statusCode, "Correct status code sent" );
+    Tap.ok( res.header[ 'content-type' ].match( /^application\/json/ ),
+        "Got JSON in response" );
+
+    Tap.ok( res.body.value == false,
+        "Value is false (low)" );
+})
+
+.then( () => {
+    const pin: Jackin.GPIO = DEVICE.getPin( 4 )['gpio'];
+    return pin.setValue( true );
+})
+.then( () => {
+    Tap.comment( "Sending /device/1/4/value request" );
+    return Superagent
+        .get( `${base_url}/device/1/4/value` )
+        .set( 'Authorization', `Bearer ${auth}` );
+})
+.then( (res) => {
+    Tap.ok( 200 == res.statusCode, "Correct status code sent" );
+    Tap.ok( res.header[ 'content-type' ].match( /^application\/json/ ),
+        "Got JSON in response" );
+
+    Tap.ok( res.body.value == true,
+        "Value is true (high)" );
 })
 
 
