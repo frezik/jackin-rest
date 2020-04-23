@@ -1,3 +1,9 @@
+Version 0.1
+===========
+* Control GPIO
+
+Nice to Haves
+=============
 * Match auth token to a user
 * Test database for user gets deleted at end
     * https://stackoverflow.com/questions/14031763/doing-a-cleanup-action-just-before-node-js-exits

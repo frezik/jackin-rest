@@ -1,8 +1,10 @@
 import Auth from '../src/db/auth';
 import Castle from 'castellated';
+import * as Jackin from 'jackin';
 import * as JackinREST from '../index';
 import * as JackinDB from '../src/db';
 import * as Fs from 'fs';
+import * as MockDevice from '../test_lib/mock_device';
 import * as Nano from "nano";
 import * as Shortid from 'shortid';
 import { v1 as Uuid } from 'uuid';
@@ -87,8 +89,11 @@ function fetch_couchdb()
 export function startServer( args: {
     auth_token_sec_timeout?: number
     ,port: number
+    ,device?: Jackin.Device
 }): Promise<string>
 {
+    if(! args.device) args.device = new MockDevice.Device();
+
     return new Promise( (resolve, reject) => {
         initConf( args.port ).then( (conf) => {
             setupCouchDB();
@@ -99,7 +104,11 @@ export function startServer( args: {
                 conf.auth_token_sec_timeout = args.auth_token_sec_timeout;
             }
 
-            return JackinREST.start( conf, fetch_couchdb );
+            return JackinREST.start(
+                args.device
+                ,conf
+                ,fetch_couchdb
+            );
         }).then( () => {
             resolve( `http://localhost:${PORT}` );
         });

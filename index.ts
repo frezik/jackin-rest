@@ -1,6 +1,7 @@
 import * as Express from "express";
 import * as Fs from "fs";
 import * as Http from "http";
+import * as Jackin from 'jackin';
 import * as Logger from "logger";
 import * as Nano from "nano";
 import * as Server from "./src/server";
@@ -10,6 +11,7 @@ import * as Yargs from "yargs";
 
 const CONFIG_FILE = 'config.yaml';
 export let CONF;
+export let DEVICE;
 
 
 function default_conf()
@@ -58,7 +60,8 @@ function default_couchdb( conf: {
 let httpServer;
 let logger;
 export function start(
-    conf?: Object
+    device: Jackin.Device
+    ,conf?: Object
     ,couchdb_callback?: () => any
 ): Promise<void>
 {
@@ -73,6 +76,7 @@ export function start(
     };
 
     CONF = conf;
+    DEVICE = device;
     logger = Logger.createLogger( conf["log_file"] );
 
     // Fix hanging connections for certain external requests. See:

@@ -2,7 +2,9 @@ import Auth from './db/auth';
 import * as BasicAuth from 'basic-auth';
 import Castle from 'castellated';
 import * as Crypto from 'crypto';
+import * as Jackin from 'jackin';
 import * as JackinDB from './db';
+import * as JackinREST from '../index';
 import * as Moment from 'moment';
 import * as Shortid from 'shortid';
 import User from './db/user';
@@ -126,6 +128,8 @@ function makeRoutes( server ): void
     server.post( '/auth', authRoute );
     server.get( '/auth', authCheckRoute );
     server.get( '/device', fetchDevicesRoute );
+    server.get( '/device/:header', fetchDeviceHeaderRoute );
+    server.get( '/device/:header/:pin/mode', fetchPinModeRoute );
 }
 
 function authTokenCheck( req, res, next ): void
@@ -250,5 +254,93 @@ function fetchDevicesRoute( req, res )
     req.logger.info( "Called devices route" );
     res
         .status( 200 )
-        .send({});
+        .send([
+            '/v1/device/1'
+        ]);
+}
+
+async function fetchDeviceHeaderRoute( req, res )
+{
+    req.logger.info( "Called device header route" );
+    const device_num = req.params[ 'header' ];
+    const device = JackinREST.DEVICE;
+    const max_pin_num = device.maxPinNum();
+
+    const pins = [];
+    for( let i = 1; i <= max_pin_num; i++ ) {
+        let pin = device.getPin( i );
+        const base_url = `/v1/device/${device_num}/${i}`;
+
+        let pin_data = {
+            base_url: base_url
+        };
+
+        if( pin.hasOwnProperty( 'power' ) ) {
+            pin_data[ 'power' ] = pin.power.voltage;
+        }
+        else if( pin.hasOwnProperty( 'gpio' ) ) {
+            pin_data[ 'set_mode' ] = base_url + "/mode";
+            pin_data[ 'value' ] = base_url + "/value";
+            pin_data[ 'pullup' ] = base_url + "/pullup";
+
+            const mode = await pin.gpio.getMode();
+            const pullup = await pin.gpio.getPullup();
+            const value =
+                (mode == Jackin.Mode.read) ? await pin.gpio.getValue() :
+                null; // If it's in write mode, or something unknown
+            // TODO in write mode, value set from CouchDB, based on 
+            // the last thing we set it to
+
+            pin_data[ 'cur_mode' ] =
+                (mode == Jackin.Mode.read) ? "read" :
+                (mode == Jackin.Mode.write) ? "write" :
+                null;
+            pin_data[ 'cur_pullup' ] = 
+                (pullup == Jackin.PullupMode.up) ? "up" :
+                (pullup == Jackin.PullupMode.down) ? "down" :
+                (pullup == Jackin.PullupMode.floating) ? "floating" :
+                null;
+            pin_data[ 'cur_value' ] = value;
+        }
+        // TODO ADC, I2C, PWM, SPI
+
+        pins.push( pin_data );
+    }
+
+    res
+        .status( 200 )
+        .send( pins );
+}
+
+async function fetchPinModeRoute( req, res )
+{
+    req.logger.info( "Called pin mode route" );
+    const device_num = req.params[ 'header' ];
+    const pin_num = req.params[ 'pin' ];
+    const device = JackinREST.DEVICE;
+    const max_pin_num = device.maxPinNum();
+
+    if( pin_num > max_pin_num ) {
+        res.sendStatus( 404 );
+        return;
+    }
+
+    const pin = device.getPin( pin_num );
+    if(! pin.hasOwnProperty( 'gpio' ) ) {
+        res
+            .status( 400 )
+            .send({
+                msg: `Pin ${pin_num} is not a GPIO pin`
+            });
+        return;
+    }
+
+    const mode = await pin.gpio.getMode();
+    const mode_str = 
+        (mode == Jackin.Mode.read) ? "read" :
+        (mode == Jackin.Mode.write) ? "write" :
+        null;
+    res.send({
+        mode: mode_str
+    });
 }
