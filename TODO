@@ -1,10 +1,12 @@
 Version 0.1
 ===========
 * Control GPIO
+** Set mode (PUT /device/:header/:pin/mode)
+** Set value (PUT /device/:header/:pin/value)
+** Set pullup (PUT /device/:header/:pin/pullup)
 
 Nice to Haves
 =============
 * Match auth token to a user
 * Test database for user gets deleted at end
     * https://stackoverflow.com/questions/14031763/doing-a-cleanup-action-just-before-node-js-exits
-
