@@ -6,7 +6,7 @@ import * as MockDevice from '../test_lib/mock_device';
 import * as Superagent from 'superagent';
 import { v1 as Uuid } from 'uuid';
 
-Tap.plan( 31 );
+Tap.plan( 34 );
 
 const PORT = 3002;
 const DEVICE = new MockDevice.Device();
@@ -101,6 +101,22 @@ Mock.startServer({
     Tap.ok( 200 == res.statusCode, "Correct status code sent" );
     Tap.ok( res.body.mode == "write",
         "Mode is write" );
+})
+
+.then( () => {
+    Tap.comment( "Sending /device/1/3/mode set request" );
+    return Superagent
+        .put( `${base_url}/device/1/3/mode` )
+        .set( 'Authorization', `Bearer ${auth}` )
+        .send({ mode: "read" });
+})
+.then( (res) => {
+    Tap.ok( 200 == res.statusCode, "Correct status code sent" );
+    Tap.ok( res.header[ 'content-type' ].match( /^application\/json/ ),
+        "Got JSON in response" );
+
+    Tap.ok( res.body.mode == "read",
+        "Mode is read" );
 })
 
 .then( () => {

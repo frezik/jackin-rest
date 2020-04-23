@@ -26,6 +26,7 @@
   "homepage": "https://github.com/frezik/jackin-www#readme",
   "dependencies": {
     "basic-auth": "^2.0.1",
+    "body-parser": "^1.19.0",
     "castellated": "^0.6.0",
     "express": "^4.17.1",
     "jackin": "^0.6.0",

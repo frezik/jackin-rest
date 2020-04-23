@@ -1,5 +1,6 @@
 import Auth from './db/auth';
 import * as BasicAuth from 'basic-auth';
+import * as BodyParser from 'body-parser';
 import Castle from 'castellated';
 import * as Crypto from 'crypto';
 import * as Jackin from 'jackin';
@@ -36,6 +37,7 @@ export function init( args: {
     castle = makeCastle( args.auth_config );
     args.server.use( makeLogger( args.logger ) );
     args.server.use( authTokenCheck );
+    args.server.use( BodyParser.json() );
     makeRoutes( args.server );
 }
 
@@ -130,6 +132,7 @@ function makeRoutes( server ): void
     server.get( '/device', fetchDevicesRoute );
     server.get( '/device/:header', fetchDeviceHeaderRoute );
     server.get( '/device/:header/:pin/mode', fetchPinModeRoute );
+    server.put( '/device/:header/:pin/mode', setPinModeRoute );
     server.get( '/device/:header/:pin/value', fetchPinValueRoute );
     server.get( '/device/:header/:pin/pullup', fetchPinPullupRoute );
 }
@@ -344,6 +347,53 @@ async function fetchPinModeRoute( req, res )
         null;
     res.send({
         mode: mode_str
+    });
+}
+
+async function setPinModeRoute( req, res )
+{
+    req.logger.info( "Called set pin mode route" );
+    const device_num = req.params[ 'header' ];
+    const pin_num = req.params[ 'pin' ];
+    const device = JackinREST.DEVICE;
+    const max_pin_num = device.maxPinNum();
+    const wanted_mode = req.body[ 'mode' ];
+
+    if( pin_num > max_pin_num ) {
+        res.sendStatus( 404 );
+        return;
+    }
+
+    const pin = device.getPin( pin_num );
+    if(! pin.hasOwnProperty( 'gpio' ) ) {
+        res
+            .status( 400 )
+            .send({
+                msg: `Pin ${pin_num} is not a GPIO pin`
+            });
+        return;
+    }
+
+    if( 
+        (wanted_mode != "read")
+        && (wanted_mode != "write")
+    ) {
+        res
+            .status( 400 )
+            .send({
+                msg: `Mode parameter must be "read" or "write"`
+            });
+        return;
+    }
+
+    const mode =
+        (wanted_mode == "read") ? Jackin.Mode.read :
+        (wanted_mode == "write") ? Jackin.Mode.write :
+        Jackin.Mode.read; // How did we get here?
+
+    await pin.gpio.setMode( mode );
+    res.send({
+        mode: wanted_mode
     });
 }
 

@@ -1,7 +1,6 @@
 Version 0.1
 ===========
 * Control GPIO
-** Set mode (PUT /device/:header/:pin/mode)
 ** Set value (PUT /device/:header/:pin/value)
 ** Set pullup (PUT /device/:header/:pin/pullup)
 
