@@ -28,7 +28,7 @@
     "basic-auth": "^2.0.1",
     "body-parser": "^1.19.0",
     "castellated": "^0.6.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "jackin": "^0.6.0",
     "js-yaml": "^3.13.1",
     "logger": "0.0.1",
